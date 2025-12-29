@@ -3,48 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baking Pro Dashboard</title>
+    <title>Baking Dashboard PRO</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="dashboard">
-        <aside class="sidebar">
-            <h2>BakingApp</h2>
-            <div class="control-group">
-                <label>Termék</label>
-                <select id="prodSelect">
-                    <option value="pogacsa">Tepertős Pogácsa</option>
-                    <option value="kenyer">Kovászos Kenyér</option>
+    <div class="container">
+        <header>
+            <h1>Baking Dashboard</h1>
+            <div class="product-selector">
+                <label for="productSelect">Válassz terméket:</label>
+                <select id="productSelect">
+                    <option value="">Betöltés...</option>
                 </select>
             </div>
-            <div class="control-group">
-                <label>Tömeg: <span id="wLabel">1000</span>g</label>
-                <input type="range" id="wSlider" min="200" max="5000" step="50" value="1000">
-            </div>
-        </aside>
+        </header>
 
-        <main class="main-content">
-            <header>
-                <h1 id="pName">Válassz egy receptet</h1>
-            </header>
-            
-            <section class="stats-grid">
-                <div class="stat-card">
-                    <h3>Sütési Hőfok</h3>
-                    <p class="value"><span id="pTemp">--</span> °C</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Sütési Idő</h3>
-                    <p class="value"><span id="pTime">--</span> perc</p>
+        <main id="app" class="hidden">
+            <section class="controls">
+                <div class="control-group">
+                    <label for="weightRange">Célsúly: <span id="weightValue">1000</span>g</label>
+                    <input type="range" id="weightRange" min="100" max="5000" step="50" value="1000">
                 </div>
             </section>
 
-            <section class="ingredients">
-                <h3>Számított Alapanyagok</h3>
-                <ul id="ingList"></ul>
+            <section class="recipe-grid">
+                <div id="ingredientsContainer"></div>
+            </section>
+
+            <section class="summary">
+                <div class="info-card">
+                    <h3>Sütési paraméterek</h3>
+                    <p id="bakeParams">Hőfok: -- | Idő: --</p>
+                </div>
             </section>
         </main>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

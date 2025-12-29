@@ -1,0 +1,11 @@
+{
+  "PROD_01": {
+    "name": "Alap Kovászos",
+    "recipe": {
+      "flours": [{ "id": "BL80", "ratio": 1.0 }],
+      "starters": [{ "id": "LEV_WHEAT", "ratio": 0.2 }],
+      "liquids": [{ "id": "WATER", "ratio": 0.7 }],
+      "globals": [{ "id": "SALT", "ratio": 0.02 }]
+    }
+  }
+}

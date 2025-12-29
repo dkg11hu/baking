@@ -1,0 +1,4 @@
+{
+  "WATER": { "name": "Víz", "type": "liquid" },
+  "MILK": { "name": "Tej", "type": "liquid" }
+}

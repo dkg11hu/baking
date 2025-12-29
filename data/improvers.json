@@ -1,0 +1,5 @@
+{
+  "GLUTEN": { "name": "Búzasikér", "type": "improver" },
+  "POTATO_FLAKE": { "name": "Burgonyapehely", "type": "improver" },
+  "STARCH": { "name": "Keményítő", "type": "improver" }
+}

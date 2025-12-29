@@ -1,79 +1,144 @@
 const BakingApp = {
-    Data: { materials: {}, tech: {}, products: {} },
+    allIngredients: {},
+    products: {},
+    currentWeight: 1000,
+    activeProduct: null,
 
-    Engine: {
-        calculate: function (prodId, weight) {
-            const p = BakingApp.Data.products[prodId];
-            if (!p) return null;
+    async init() {
+        try {
+            const dataFiles = [
+                'flours', 'starters', 'fats', 'liquids',
+                'seeds', 'spices', 'globals', 'improvers'
+            ];
 
-            const weightDiff = weight - p.base_weight;
-            const steps = Math.floor(Math.abs(weightDiff) / p.scaling.weight_step);
+            const results = await Promise.all([
+                ...dataFiles.map(f => fetch(`data/${f}.json`).then(r => r.json())),
+                fetch('data/products.json').then(r => r.json())
+            ]);
 
-            let adjTemp = p.base_temp;
-            let adjTime = p.base_time;
+            this.products = results.pop();
+            this.allIngredients = Object.assign({}, ...results);
 
-            if (weightDiff > 0) {
-                adjTemp -= (p.scaling.temp_step * steps);
-                adjTime += (p.base_time * p.scaling.time_factor * steps);
-            } else if (weightDiff < 0) {
-                adjTemp += (p.scaling.temp_step * steps);
-                adjTime -= (p.base_time * 0.2 * steps);
-            }
+            this.setupEventListeners();
+            this.renderProductSelector();
 
-            return { temp: adjTemp, time: Math.round(adjTime) };
+            console.log("Rendszer kész.");
+        } catch (err) {
+            console.error("Hiba az inicializálásnál:", err);
         }
     },
 
-    UI: {
-        init: async function () {
-            try {
-                const [m, t, p] = await Promise.all([
-                    fetch('materials.json').then(r => r.json()),
-                    fetch('technologies.json').then(r => r.json()),
-                    fetch('products.json').then(r => r.json())
-                ]);
-                BakingApp.Data.materials = m;
-                BakingApp.Data.tech = t;
-                BakingApp.Data.products = p;
+    setupEventListeners() {
+        const select = document.getElementById('productSelect');
+        const range = document.getElementById('weightRange');
 
-                this.bindEvents();
-                this.render();
-                console.log("🚀 BakingApp Online");
-            } catch (e) { console.error("Hiba:", e); }
-        },
+        select.addEventListener('change', (e) => this.loadProduct(e.target.value));
+        range.addEventListener('input', (e) => {
+            this.currentWeight = e.target.value;
+            const valDisplay = document.getElementById('weightValue');
+            if (valDisplay) valDisplay.innerText = this.currentWeight;
+            this.updateCalculations();
+        });
+    },
 
-        bindEvents: function () {
-            document.getElementById('prodSelect').addEventListener('change', () => this.render());
-            document.getElementById('wSlider').addEventListener('input', (e) => {
-                document.getElementById('wLabel').innerText = e.target.value;
-                this.render();
+    renderProductSelector() {
+        const select = document.getElementById('productSelect');
+        select.innerHTML = '<option value="">Válassz...</option>' +
+            Object.entries(this.products).map(([id, p]) =>
+                `<option value="${id}">${p.name}</option>`).join('');
+    },
+
+    loadProduct(id) {
+        if (!id) return;
+        this.activeProduct = this.products[id];
+
+        // 1. Visszaállítjuk a belső súlyt az alapértelmezett 1000-re
+        this.currentWeight = 1000;
+
+        // 2. Frissítjük a UI-t, hogy mutassa az 1000-et
+        const range = document.getElementById('weightRange');
+        const display = document.getElementById('weightValue');
+        if (range) range.value = 1000;
+        if (display) display.innerText = 1000;
+
+        // 3. Megjelenítjük az appot és kalkulálunk
+        const appElem = document.getElementById('app');
+        if (appElem) appElem.classList.remove('hidden');
+        this.updateCalculations();
+    },
+
+    updateCalculations() {
+        if (!this.activeProduct) return;
+
+        const container = document.getElementById('ingredientsContainer');
+        container.innerHTML = '';
+
+        // --- 1. ÖSSZETEVŐK MEGJELENÍTÉSE ---
+        Object.entries(this.activeProduct.recipe).forEach(([category, items]) => {
+            const section = document.createElement('div');
+            section.className = 'category-block';
+
+            const title = {
+                flours: 'Lisztek', starters: 'Starterek', liquids: 'Folyadékok',
+                fats: 'Zsiradékok', seeds: 'Magvak', spices: 'Fűszerek',
+                globals: 'Globális anyagok', improvers: 'Állományjavítók'
+            }[category] || category;
+
+            let html = `<h3>${title}</h3><ul>`;
+            items.forEach(item => {
+                const info = this.allIngredients[item.id] || { name: item.id };
+                const rawAmount = this.currentWeight * item.ratio;
+
+                // SZABÁLY: Ha az arány >= 5% (0.05), akkor kerekítünk egészre.
+                // Ha < 5%, akkor marad 1 tizedesjegy.
+                const displayAmount = item.ratio < 0.05
+                    ? rawAmount.toFixed(1)
+                    : Math.round(rawAmount);
+
+                html += `<li><strong>${info.name}:</strong> ${displayAmount}g</li>`;
             });
-        },
+            html += '</ul>';
+            section.innerHTML = html;
+            container.appendChild(section);
+        });
+        // --- 2. IDŐTERV MEGJELENÍTÉSE ---
+        if (this.activeProduct.times) {
+            const timeSection = document.createElement('div');
+            timeSection.className = 'category-block time-block';
+            const t = this.activeProduct.times;
+            timeSection.innerHTML = `
+                <h3>Technológiai idők</h3>
+                <ul>
+                    <li><strong>Érés (Bulk):</strong> ${t.bulk_fermentation} perc</li>
+                    <li><strong>Pihentetés:</strong> ${t.rest_after_shaping} perc</li>
+                    <li><strong>Záró kelesztés:</strong> ${t.final_proof} perc</li>
+                </ul>
+            `;
+            container.appendChild(timeSection);
+        }
 
-        render: function () {
-            const id = document.getElementById('prodSelect').value;
-            const weight = parseInt(document.getElementById('wSlider').value);
-            const product = BakingApp.Data.products[id];
+        // --- 3. 4 FÁZISÚ SÜTÉSI PROTOKOLL ---
+        if (this.activeProduct.baking_protocol) {
+            const bakeSection = document.createElement('div');
+            bakeSection.className = 'category-block bake-block';
+            let bakeHtml = `<h3>Sütési protokoll</h3><div class="phases-container">`;
 
-            if (!product) return;
-
-            // Engine hívása
-            const results = BakingApp.Engine.calculate(id, weight);
-
-            // UI frissítése
-            document.getElementById('pName').innerText = product.name;
-            document.getElementById('pTemp').innerText = results.temp;
-            document.getElementById('pTime').innerText = results.time;
-
-            // Alapanyag lista
-            const list = document.getElementById('ingList');
-            list.innerHTML = product.ingredients.map(ing => {
-                const mat = BakingApp.Data.materials[ing.id];
-                const amount = Math.round(weight * ing.ratio);
-                return `<li><span>${mat.icon} ${mat.name}</span> <strong>${amount}g</strong></li>`;
-            }).join('');
+            this.activeProduct.baking_protocol.forEach((p, index, arr) => {
+                const vent = (index > 0 && arr[index - 1].steam && !p.steam) ? '<span class="vent-badge">SZELLŐZTETÉS</span>' : '';
+                bakeHtml += `
+                    <div class="phase-card">
+                        <div class="phase-num">${p.phase}. fázis ${vent}</div>
+                        <div class="phase-temp">${p.temp}°C</div>
+                        <div class="phase-time">${p.time} perc</div>
+                        <div class="phase-steam ${p.steam ? 'active' : ''}">${p.steam ? 'GŐZ' : 'SZÁRAZ'}</div>
+                    </div>
+                `;
+            });
+            bakeHtml += `</div>`;
+            bakeSection.innerHTML = bakeHtml;
+            container.appendChild(bakeSection);
         }
     }
 };
 
-window.addEventListener('DOMContentLoaded', () => BakingApp.UI.init());
+BakingApp.init();
