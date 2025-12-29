@@ -1,0 +1,1 @@
+{"kenyer":{"name":"Kovászos","base_weight":1000,"base_temp":230,"base_time":45,"scaling":{"temp_step":8,"time_factor":0.5,"weight_step":500},"workflow":["T_BAKE"]}}

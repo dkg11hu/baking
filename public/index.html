@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baking Pro Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>BakingApp</h2>
+            <div class="control-group">
+                <label>Termék</label>
+                <select id="prodSelect">
+                    <option value="pogacsa">Tepertős Pogácsa</option>
+                    <option value="kenyer">Kovászos Kenyér</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Tömeg: <span id="wLabel">1000</span>g</label>
+                <input type="range" id="wSlider" min="200" max="5000" step="50" value="1000">
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <h1 id="pName">Válassz egy receptet</h1>
+            </header>
+            
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <h3>Sütési Hőfok</h3>
+                    <p class="value"><span id="pTemp">--</span> °C</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Sütési Idő</h3>
+                    <p class="value"><span id="pTime">--</span> perc</p>
+                </div>
+            </section>
+
+            <section class="ingredients">
+                <h3>Számított Alapanyagok</h3>
+                <ul id="ingList"></ul>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
